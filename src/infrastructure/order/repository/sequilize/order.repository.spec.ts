@@ -140,6 +140,7 @@ describe("Order repository test", () => {
     }).rejects.toThrow("Order not found");
 
   });
+
   it("should findAll get all order on database", async () => {
     const customerRepository = new CustomerRepository();
     const customer = new Customer("123", "Customer 1");
@@ -185,4 +186,70 @@ describe("Order repository test", () => {
     expect(orders).toContainEqual(order);
     expect(orders).toContainEqual(order2);
   });
+
+  it("should update changes order on database", async () => {
+
+    const customerRepository = new CustomerRepository();
+    const customer = new Customer("123", "Customer 1");
+    const address = new Address("Street 1", 1, "Zipcode 1", "City 1");
+    customer.changeAddress(address);
+    await customerRepository.create(customer);
+
+    const productRepository = new ProductRepository();
+    const product = new Product("123", "Product 1", 10);
+    await productRepository.create(product);
+
+    const ordemItem = new OrderItem(
+      "1",
+      product.name,
+      product.price,
+      product.id,
+      3
+    );
+
+    const order = new Order("123", "123", [ordemItem]);
+
+    const orderRepository = new OrderRepository();
+    await orderRepository.create(order);
+
+    const product1 = new Product("2", "Product 2", 30);
+    await productRepository.create(product1);
+
+
+    const newOrderItem = new OrderItem(
+      "333",
+      product1.name,
+      product1.price,
+      product1.id,
+      1
+    )
+    const newOrderItems = [newOrderItem];
+    order.changeItems(newOrderItems);
+
+    await orderRepository.update(order)
+
+    const orderModel = await OrderModel.findOne({
+      where: { id: order.id },
+      include: ["items"],
+    });
+
+    expect(orderModel.toJSON()).toStrictEqual({
+      id: "123",
+      customer_id: "123",
+      total: order.total(),
+      items: [
+        {
+          id: newOrderItem.id,
+          name: newOrderItem.name,
+          price: newOrderItem.price / newOrderItem.quantity,
+          quantity: newOrderItem.quantity,
+          order_id: "123",
+          product_id: product1.id,
+        },
+      ],
+    });
+  });
+
+ 
+
 });
