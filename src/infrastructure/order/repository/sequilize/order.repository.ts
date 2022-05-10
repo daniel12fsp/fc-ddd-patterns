@@ -22,4 +22,24 @@ export default class OrderRepository {
       }
     );
   }
+
+  async find(id: string): Promise<Order> {
+    let orderModel;
+
+    try {
+      orderModel = await OrderModel.findOne({
+        where: { id },
+        include: ["items"],
+        rejectOnEmpty: true
+      });
+
+      return new Order(
+        orderModel.id,
+        orderModel.customer_id,
+        orderModel.items.map(item => new OrderItem(item.id, item.name, item.price, item.product_id, item.quantity))
+      );
+    } catch (error) {
+      throw new Error("Order not found");
+    }
+  }
 }
