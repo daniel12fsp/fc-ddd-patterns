@@ -81,6 +81,7 @@ describe("Order repository test", () => {
       ],
     });
   });
+
   it("should find work when order is on database", async () => {
     const customerRepository = new CustomerRepository();
     const customer = new Customer("123", "Customer 1");
@@ -138,5 +139,50 @@ describe("Order repository test", () => {
       await orderRepository.find(orderId)
     }).rejects.toThrow("Order not found");
 
+  });
+  it("should findAll get all order on database", async () => {
+    const customerRepository = new CustomerRepository();
+    const customer = new Customer("123", "Customer 1");
+    const address = new Address("Street 1", 1, "Zipcode 1", "City 1");
+    customer.changeAddress(address);
+    await customerRepository.create(customer);
+
+    const productRepository = new ProductRepository();
+    const product1 = new Product("123", "Product 1", 10);
+    await productRepository.create(product1);
+
+    const ordemItem = new OrderItem(
+      "1",
+      product1.name,
+      product1.price,
+      product1.id,
+      3
+    );
+
+    const order = new Order("123", customer.id, [ordemItem]);
+
+    const orderRepository = new OrderRepository();
+    await orderRepository.create(order);
+
+    const product2 = new Product("2", "Product 2", 30);
+    await productRepository.create(product2);
+
+
+    const newOrderItem = new OrderItem(
+      "333",
+      product2.name,
+      product2.price,
+      product2.id,
+      1
+    )
+
+    const order2 = new Order("124", customer.id, [newOrderItem]);
+
+    await orderRepository.create(order2);
+
+    const orders = await orderRepository.findAll();
+    expect(orders).toHaveLength(2);
+    expect(orders).toContainEqual(order);
+    expect(orders).toContainEqual(order2);
   });
 });
